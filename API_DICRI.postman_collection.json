@@ -1,0 +1,444 @@
+{
+  "info": {
+    "name": "API DICRI - Gestión de Evidencia",
+    "description": "Colección completa de endpoints de la API DICRI",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:4000/api",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Autenticación",
+      "item": [
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.collectionVariables.set(\"token\", jsonData.token);",
+                  "    pm.environment.set(\"token\", jsonData.token);",
+                  "    console.log(\"Token guardado:\", jsonData.token);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"usuario_login\": \"admin\",\n  \"password_plano\": \"pass\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Autentica un usuario y devuelve un token JWT que se guarda automáticamente"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Usuarios",
+      "item": [
+        {
+          "name": "Listar Usuarios",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["users"]
+            },
+            "description": "Lista todos los usuarios (requiere rol ADMIN)"
+          },
+          "response": []
+        },
+        {
+          "name": "Crear Usuario",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id_rol\": 3,\n  \"nombre\": \"Juan\",\n  \"apellido\": \"Pérez\",\n  \"usuario_login\": \"jperez\",\n  \"password_plano\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["users"]
+            },
+            "description": "Crea un nuevo usuario (requiere rol ADMIN)"
+          },
+          "response": []
+        },
+        {
+          "name": "Actualizar Usuario",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Juan Carlos\",\n  \"apellido\": \"Pérez González\",\n  \"id_rol\": 2\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/users/2",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "2"]
+            },
+            "description": "Actualiza un usuario existente (requiere rol ADMIN)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Expedientes",
+      "item": [
+        {
+          "name": "Listar Expedientes",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/expedientes",
+              "host": ["{{baseUrl}}"],
+              "path": ["expedientes"]
+            },
+            "description": "Lista expedientes con filtros opcionales"
+          },
+          "response": []
+        },
+        {
+          "name": "Crear Expediente",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"numero_mp\": \"MP-001-2025-00003\",\n  \"numero_averiguacion\": \"AV-2025-0003\",\n  \"delito\": \"Robo agravado\",\n  \"lugar_hecho\": \"Zona 10, Guatemala\",\n  \"fecha_hecho\": \"2025-11-23\",\n  \"id_departamento_hecho\": 1,\n  \"id_municipio_hecho\": 1,\n  \"sintesis_hecho\": \"Robo a mano armada en establecimiento comercial\",\n  \"observaciones\": \"Cámaras de seguridad disponibles\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/expedientes",
+              "host": ["{{baseUrl}}"],
+              "path": ["expedientes"]
+            },
+            "description": "Crea un nuevo expediente (COORDINADOR o ADMIN)"
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener Expediente por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/expedientes/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["expedientes", "1"]
+            },
+            "description": "Obtiene un expediente por su ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Conteo de Expedientes",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/expedientes/conteo",
+              "host": ["{{baseUrl}}"],
+              "path": ["expedientes", "conteo"]
+            },
+            "description": "Obtiene el conteo de expedientes por estado"
+          },
+          "response": []
+        },
+        {
+          "name": "Enviar a Revisión",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/expedientes/1/enviar-revision",
+              "host": ["{{baseUrl}}"],
+              "path": ["expedientes", "1", "enviar-revision"]
+            },
+            "description": "Envía un expediente a revisión (COORDINADOR)"
+          },
+          "response": []
+        },
+        {
+          "name": "Aprobar Expediente",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/expedientes/1/aprobar",
+              "host": ["{{baseUrl}}"],
+              "path": ["expedientes", "1", "aprobar"]
+            },
+            "description": "Aprueba un expediente (ADMIN)"
+          },
+          "response": []
+        },
+        {
+          "name": "Rechazar Expediente",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"motivo_rechazo\": \"Falta información en la síntesis del hecho\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/expedientes/1/rechazar",
+              "host": ["{{baseUrl}}"],
+              "path": ["expedientes", "1", "rechazar"]
+            },
+            "description": "Rechaza un expediente con motivo (ADMIN)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Indicios",
+      "item": [
+        {
+          "name": "Agregar Indicio",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"descripcion\": \"Arma de fuego calibre 9mm\",\n  \"lugar_hallazgo\": \"Escena del crimen, calle principal\",\n  \"fecha_hallazgo\": \"2025-11-23\",\n  \"observaciones\": \"Presentaba huellas dactilares\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/expedientes/1/indicios",
+              "host": ["{{baseUrl}}"],
+              "path": ["expedientes", "1", "indicios"]
+            },
+            "description": "Agrega un indicio a un expediente (TECNICO o superior)"
+          },
+          "response": []
+        },
+        {
+          "name": "Listar Indicios de Expediente",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/expedientes/1/indicios",
+              "host": ["{{baseUrl}}"],
+              "path": ["expedientes", "1", "indicios"]
+            },
+            "description": "Lista todos los indicios de un expediente"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Catálogos",
+      "item": [
+        {
+          "name": "Listar Departamentos",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/catalogos/departamentos",
+              "host": ["{{baseUrl}}"],
+              "path": ["catalogos", "departamentos"]
+            },
+            "description": "Lista todos los departamentos de Guatemala"
+          },
+          "response": []
+        },
+        {
+          "name": "Listar Municipios por Departamento",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/catalogos/municipios/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["catalogos", "municipios", "1"]
+            },
+            "description": "Lista municipios de un departamento específico"
+          },
+          "response": []
+        },
+        {
+          "name": "Listar Estados de Expediente",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/catalogos/estados-expediente",
+              "host": ["{{baseUrl}}"],
+              "path": ["catalogos", "estados-expediente"]
+            },
+            "description": "Lista todos los estados posibles de expedientes"
+          },
+          "response": []
+        },
+        {
+          "name": "Listar Roles",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/catalogos/roles",
+              "host": ["{{baseUrl}}"],
+              "path": ["catalogos", "roles"]
+            },
+            "description": "Lista todos los roles de usuario"
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
