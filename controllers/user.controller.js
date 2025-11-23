@@ -67,7 +67,13 @@ exports.getUsers = async (req, res) => {
 
         const result = await executeStoredProcedure('sp_ObtenerUsuarios', params);
 
-        res.json(result.recordset);
+        // Transformar 'estado' a 'activo' para compatibilidad con frontend
+        const usuarios = result.recordset.map(user => ({
+            ...user,
+            activo: user.estado === 1 || user.estado === true
+        }));
+
+        res.json(usuarios);
 
     } catch (error) {
         console.error('Error al obtener usuarios:', error);
@@ -115,5 +121,45 @@ exports.updateUser = async (req, res) => {
     } catch (error) {
         console.error('Error al actualizar usuario:', error);
         res.status(500).json({ message: 'Error al actualizar el usuario.', error: error.message });
+    }
+};
+
+/**
+ * Endpoint para cambiar el estado de un usuario (PATCH /api/users/:id/estado)
+ * Autorización: ADMIN
+ * Permite activar/desactivar usuarios
+ */
+exports.toggleUserStatus = async (req, res) => {
+    const id_usuario = req.params.id;
+    const id_usuario_accion = req.user.id;
+    const { estado } = req.body;
+
+    if (estado === undefined || (estado !== 0 && estado !== 1 && estado !== true && estado !== false)) {
+        return res.status(400).json({ message: 'El campo estado es requerido y debe ser 0 (inactivo) o 1 (activo).' });
+    }
+
+    try {
+        const params = [
+            { name: 'id_usuario', type: sql.Int, value: id_usuario },
+            { name: 'id_rol', type: sql.Int, value: null },
+            { name: 'nombre', type: sql.VarChar(100), value: null },
+            { name: 'apellido', type: sql.VarChar(100), value: null },
+            { name: 'usuario_login', type: sql.VarChar(50), value: null },
+            { name: 'password_hash', type: sql.VarChar(255), value: null },
+            { name: 'estado', type: sql.Bit, value: estado ? 1 : 0 },
+            { name: 'id_usuario_accion', type: sql.Int, value: id_usuario_accion }
+        ];
+
+        const result = await executeStoredProcedure('sp_ActualizarUsuario', params);
+
+        res.json({
+            message: `Usuario ${estado ? 'activado' : 'desactivado'} exitosamente.`,
+            id_usuario: result.recordset[0].id_usuario_actualizado,
+            estado: estado ? 1 : 0
+        });
+
+    } catch (error) {
+        console.error('Error al cambiar estado del usuario:', error);
+        res.status(500).json({ message: 'Error al cambiar el estado del usuario.', error: error.message });
     }
 };

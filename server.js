@@ -16,12 +16,16 @@ const app = express();
 const PORT = process.env.PORT || 4000;
 
 // CONFIGURACIÓN DE CORS (Debe ir ANTES de las rutas)
-app.use(cors({
-    origin: 'http://localhost:3000', // URL del frontend
+const corsOptions = {
+    origin: ['http://localhost:3000', 'http://127.0.0.1:3000'],
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
-}));
+    optionsSuccessStatus: 200,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+    exposedHeaders: ['Authorization']
+};
+
+app.use(cors(corsOptions));
 
 // MIDDLEWARE
 app.use(express.json()); 

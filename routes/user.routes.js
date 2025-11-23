@@ -90,4 +90,55 @@ router.get('/', userController.getUsers);
  */
 router.put('/:id', userController.updateUser);
 
+/**
+ * @swagger
+ * /users/{id}/estado:
+ *   patch:
+ *     summary: Activa o desactiva un usuario
+ *     tags: [Usuarios]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID del usuario
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - estado
+ *             properties:
+ *               estado:
+ *                 type: integer
+ *                 enum: [0, 1]
+ *                 description: 0 para desactivar, 1 para activar
+ *           example:
+ *             estado: 1
+ *     responses:
+ *       200:
+ *         description: Estado del usuario actualizado
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 id_usuario:
+ *                   type: integer
+ *                 estado:
+ *                   type: integer
+ *       400:
+ *         description: Campo estado inválido
+ *       403:
+ *         description: Acceso denegado
+ */
+router.patch('/:id/estado', userController.toggleUserStatus);
+
 module.exports = router;
