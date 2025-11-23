@@ -1,88 +1,299 @@
-// routes/expediente.routes.js (COMPLETO)
+// routes/expediente.routes.js
 
 const express = require('express');
 const expedienteController = require('../controllers/expediente.controller');
 const { verifyToken, authorizeRoles } = require('../middleware/auth.middleware');
 const router = express.Router();
 
+/**
+ * @swagger
+ * tags:
+ *   name: Expedientes
+ *   description: Gestión completa de Expedientes e Indicios con flujo de estados
+ */
+
 // Aplica verificación de token a todas las rutas de expedientes
 router.use(verifyToken); 
 
-// ===============================================
-// RUTAS DE EXPEDIENTES (CRUD Principal)
-// ===============================================
+/**
+ * @swagger
+ * /expedientes/conteo:
+ *   get:
+ *     summary: Obtiene el conteo de expedientes por estado
+ *     tags: [Expedientes]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Conteo exitoso
+ *       403:
+ *         description: Acceso denegado (solo COORDINADOR, ADMIN)
+ */
+router.get(
+    '/conteo',
+    authorizeRoles(['COORDINADOR', 'ADMIN']),
+    expedienteController.obtenerConteoPorEstado
+);
 
-// POST /api/expedientes: Crear Expediente (Solo TECNICO)
+/**
+ * @swagger
+ * /expedientes:
+ *   post:
+ *     summary: Crea un nuevo expediente en estado BORRADOR
+ *     tags: [Expedientes]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/CreateExpedienteRequest'
+ *     responses:
+ *       201:
+ *         description: Expediente creado exitosamente
+ *       403:
+ *         description: Acceso denegado (solo TECNICO)
+ */
 router.post(
     '/', 
     authorizeRoles(['TECNICO']), 
     expedienteController.crearExpediente
 );
 
-// PUT /api/expedientes/:id: Actualizar Expediente (Solo TECNICO - en BORRADOR/RECHAZADO)
-router.put(
-    '/:id',
-    authorizeRoles(['TECNICO']), 
-    expedienteController.actualizarExpediente
-);
-
-// GET /api/expedientes/:id: Obtener Detalle (TECNICO, COORDINADOR)
-router.get(
-    '/:id',
-    authorizeRoles(['TECNICO', 'COORDINADOR']),
-    expedienteController.obtenerDetalleExpediente
-);
-
-// GET /api/expedientes: Listar Expedientes con Filtros (TECNICO, COORDINADOR)
+/**
+ * @swagger
+ * /expedientes:
+ *   get:
+ *     summary: Lista expedientes con filtros opcionales
+ *     tags: [Expedientes]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: id_estado
+ *         schema:
+ *           type: integer
+ *         description: Filtrar por estado (1=BORRADOR, 2=EN_REVISION, 3=APROBADO, 4=RECHAZADO)
+ *       - in: query
+ *         name: fecha_inicio
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Filtrar por fecha de inicio (YYYY-MM-DD)
+ *       - in: query
+ *         name: fecha_fin
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Filtrar por fecha final (YYYY-MM-DD)
+ *       - in: query
+ *         name: codigo_expediente
+ *         schema:
+ *           type: string
+ *         description: Buscar por código de expediente
+ *     responses:
+ *       200:
+ *         description: Lista de expedientes
+ */
 router.get(
     '/',
     authorizeRoles(['TECNICO', 'COORDINADOR']),
     expedienteController.listarExpedientes
 );
 
-// GET /api/expedientes/conteo: Conteo por Estado (COORDINADOR, ADMIN)
+/**
+ * @swagger
+ * /expedientes/{id}:
+ *   get:
+ *     summary: Obtiene el detalle completo de un expediente
+ *     tags: [Expedientes]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID del expediente
+ *     responses:
+ *       200:
+ *         description: Detalle del expediente con indicios e historial
+ *       404:
+ *         description: Expediente no encontrado
+ */
 router.get(
-    '/conteo', // Debe ir antes de /:id para evitar que "conteo" se interprete como un ID
-    authorizeRoles(['COORDINADOR', 'ADMIN']),
-    expedienteController.obtenerConteoPorEstado
+    '/:id',
+    authorizeRoles(['TECNICO', 'COORDINADOR']),
+    expedienteController.obtenerDetalleExpediente
 );
 
+/**
+ * @swagger
+ * /expedientes/{id}:
+ *   put:
+ *     summary: Actualiza un expediente (solo en BORRADOR o RECHAZADO)
+ *     tags: [Expedientes]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID del expediente
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/CreateExpedienteRequest'
+ *     responses:
+ *       200:
+ *         description: Expediente actualizado
+ *       403:
+ *         description: Acceso denegado o estado no permite edición
+ */
+router.put(
+    '/:id',
+    authorizeRoles(['TECNICO']), 
+    expedienteController.actualizarExpediente
+);
 
-// ===============================================
-// RUTAS DE INDICIOS (CRUD)
-// ===============================================
+/**
+ * @swagger
+ * /expedientes/{id}/estado:
+ *   put:
+ *     summary: Cambia el estado de un expediente
+ *     tags: [Expedientes]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID del expediente
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/CambiarEstadoRequest'
+ *     responses:
+ *       200:
+ *         description: Estado cambiado exitosamente
+ *       400:
+ *         description: Transición de estado inválida
+ */
+router.put(
+    '/:id/estado', 
+    authorizeRoles(['TECNICO', 'COORDINADOR']),
+    expedienteController.cambiarEstado
+);
 
-// POST /api/expedientes/:id/indicios: Agregar Indicio (Solo TECNICO)
+/**
+ * @swagger
+ * /expedientes/{id}/indicios:
+ *   post:
+ *     summary: Agrega un indicio a un expediente
+ *     tags: [Expedientes]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID del expediente
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/CreateIndicioRequest'
+ *     responses:
+ *       201:
+ *         description: Indicio agregado exitosamente
+ *       403:
+ *         description: Solo se pueden agregar indicios en estado BORRADOR
+ */
 router.post(
     '/:id/indicios', 
     authorizeRoles(['TECNICO']), 
     expedienteController.agregarIndicio
 );
 
-// PUT /api/expedientes/:id/indicios/:idIndicio: Actualizar Indicio (Solo TECNICO)
+/**
+ * @swagger
+ * /expedientes/{id}/indicios/{idIndicio}:
+ *   put:
+ *     summary: Actualiza un indicio
+ *     tags: [Expedientes]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID del expediente
+ *       - in: path
+ *         name: idIndicio
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID del indicio
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/CreateIndicioRequest'
+ *     responses:
+ *       200:
+ *         description: Indicio actualizado
+ */
 router.put(
     '/:id/indicios/:idIndicio', 
     authorizeRoles(['TECNICO']), 
     expedienteController.actualizarIndicio
 );
 
-// DELETE /api/expedientes/:id/indicios/:idIndicio: Eliminar Indicio (Solo TECNICO)
+/**
+ * @swagger
+ * /expedientes/{id}/indicios/{idIndicio}:
+ *   delete:
+ *     summary: Elimina un indicio
+ *     tags: [Expedientes]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID del expediente
+ *       - in: path
+ *         name: idIndicio
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID del indicio
+ *     responses:
+ *       200:
+ *         description: Indicio eliminado exitosamente
+ */
 router.delete(
     '/:id/indicios/:idIndicio', 
     authorizeRoles(['TECNICO']), 
     expedienteController.eliminarIndicio
-);
-
-
-// ===============================================
-// RUTAS DE FLUJO DE ESTADO
-// ===============================================
-
-// PUT /api/expedientes/:id/estado: Cambiar Estado
-router.put(
-    '/:id/estado', 
-    authorizeRoles(['TECNICO', 'COORDINADOR']),
-    expedienteController.cambiarEstado
 );
 
 module.exports = router;

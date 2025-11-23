@@ -1,28 +1,30 @@
-// server.js (Actualizado)
+// server.js
 
 const express = require('express');
 const dotenv = require('dotenv');
-const swaggerUi = require('swagger-ui-express'); // <--- NUEVO
-const swaggerSpec = require('./swagger');         // <--- NUEVO
+const swaggerUi = require('swagger-ui-express');
+const swaggerSpec = require('./swagger');
 const authRoutes = require('./routes/auth.routes');
 const userRoutes = require('./routes/user.routes'); 
 const expedienteRoutes = require('./routes/expediente.routes');
+const catalogosRoutes = require('./routes/catalogos.routes');
 
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 4000; // Asumimos PORT 4000
+const PORT = process.env.PORT || 4000;
 
 // MIDDLEWARE
 app.use(express.json()); 
 
 // RUTAS DE DOCUMENTACIÓN SWAGGER (Debe ir primero)
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec)); // <--- NUEVO
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // RUTAS DE LA API
 app.use('/api/auth', authRoutes); 
 app.use('/api/users', userRoutes); 
-app.use('/api/expedientes', expedienteRoutes); 
+app.use('/api/expedientes', expedienteRoutes);
+app.use('/api/catalogos', catalogosRoutes);
 
 // Ruta raíz
 app.get('/', (req, res) => {
@@ -32,5 +34,5 @@ app.get('/', (req, res) => {
 // Iniciar el servidor
 app.listen(PORT, () => {
     console.log(`Servidor Node.js escuchando en el puerto ${PORT}`);
-    console.log(`🚀 Documentación Swagger: http://localhost:${PORT}/api-docs`); // <--- NUEVO
+    console.log(`🚀 Documentación Swagger: http://localhost:${PORT}/api-docs`);
 });

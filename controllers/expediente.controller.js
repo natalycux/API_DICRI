@@ -181,32 +181,31 @@ exports.obtenerDetalleExpediente = async (req, res) => {
  */
 exports.actualizarExpediente = async (req, res) => {
     const id_expediente = req.params.id;
-    const id_usuario_actualiza = req.user.id; 
+    const id_usuario_accion = req.user.id; 
     
-    // Parámetros esperados del cuerpo de la petición (todos opcionales, excepto el ID)
+    // Parámetros esperados del cuerpo de la petición
     const { codigo_expediente, id_fiscalia, descripcion_corta, ruta_archivo_pdf } = req.body;
 
-    // Aseguramos que al menos un campo esté presente para la actualización
-    if (!codigo_expediente && !id_fiscalia && !descripcion_corta && !ruta_archivo_pdf) {
-        return res.status(400).json({ message: 'Debe proporcionar al menos un campo para actualizar.' });
+    if (!codigo_expediente || !id_fiscalia || !descripcion_corta) {
+        return res.status(400).json({ message: 'El código, fiscalía y descripción son obligatorios.' });
     }
 
     try {
         const params = [
             { name: 'id_expediente', type: sql.Int, value: id_expediente },
-            { name: 'codigo_expediente', type: sql.VarChar(50), value: codigo_expediente || null },
-            { name: 'id_fiscalia', type: sql.Int, value: id_fiscalia || null },
-            { name: 'descripcion_corta', type: sql.VarChar(255), value: descripcion_corta || null },
+            { name: 'codigo_expediente', type: sql.VarChar(50), value: codigo_expediente },
+            { name: 'id_fiscalia', type: sql.Int, value: id_fiscalia },
+            { name: 'descripcion_corta', type: sql.VarChar(255), value: descripcion_corta },
             { name: 'ruta_archivo_pdf', type: sql.VarChar(255), value: ruta_archivo_pdf || null },
-            { name: 'id_usuario_actualiza', type: sql.Int, value: id_usuario_actualiza }
+            { name: 'id_usuario_accion', type: sql.Int, value: id_usuario_accion }
         ];
 
-        // El SP (11) sp_ActualizarExpediente valida el estado.
-        await executeStoredProcedure('sp_ActualizarExpediente', params);
+        // El SP (11) sp_ActualizarExpediente valida el estado (solo BORRADOR o RECHAZADO).
+        const result = await executeStoredProcedure('sp_ActualizarExpediente', params);
         
         res.status(200).json({
             message: `Expediente ${id_expediente} actualizado exitosamente.`,
-            id_expediente: id_expediente
+            id_expediente_actualizado: result.recordset[0].id_expediente_actualizado
         });
 
     } catch (error) {
@@ -222,30 +221,33 @@ exports.actualizarExpediente = async (req, res) => {
  * Llama al SP: sp_ActualizarIndicio (12)
  */
 exports.actualizarIndicio = async (req, res) => {
-    const id_expediente = req.params.id; 
     const id_indicio = req.params.idIndicio;
-    const id_usuario_actualiza = req.user.id; 
+    const id_usuario_accion = req.user.id; 
 
     const { nombre_objeto, descripcion, color, tamano, peso, ubicacion_en_escena } = req.body;
+
+    if (!nombre_objeto || !descripcion || !ubicacion_en_escena) {
+        return res.status(400).json({ message: 'El nombre, descripción y ubicación son obligatorios.' });
+    }
 
     try {
         const params = [
             { name: 'id_indicio', type: sql.Int, value: id_indicio },
-            { name: 'id_expediente', type: sql.Int, value: id_expediente },
-            { name: 'nombre_objeto', type: sql.VarChar(150), value: nombre_objeto || null },
-            { name: 'descripcion', type: sql.VarChar(500), value: descripcion || null },
+            { name: 'nombre_objeto', type: sql.VarChar(150), value: nombre_objeto },
+            { name: 'descripcion', type: sql.VarChar(500), value: descripcion },
             { name: 'color', type: sql.VarChar(50), value: color || null },
             { name: 'tamano', type: sql.VarChar(50), value: tamano || null },
             { name: 'peso', type: sql.Decimal(10, 2), value: peso || null },
-            { name: 'ubicacion_en_escena', type: sql.VarChar(255), value: ubicacion_en_escena || null },
-            { name: 'id_usuario_actualiza', type: sql.Int, value: id_usuario_actualiza }
+            { name: 'ubicacion_en_escena', type: sql.VarChar(255), value: ubicacion_en_escena },
+            { name: 'id_usuario_accion', type: sql.Int, value: id_usuario_accion }
         ];
 
-        // El SP (12) sp_ActualizarIndicio valida el estado.
-        await executeStoredProcedure('sp_ActualizarIndicio', params);
+        // El SP (12) sp_ActualizarIndicio valida el estado del expediente.
+        const result = await executeStoredProcedure('sp_ActualizarIndicio', params);
         
         res.status(200).json({
-            message: `Indicio ${id_indicio} del Expediente ${id_expediente} actualizado.`,
+            message: `Indicio ${id_indicio} actualizado exitosamente.`,
+            id_indicio_actualizado: result.recordset[0].id_indicio_actualizado
         });
 
     } catch (error) {
@@ -262,20 +264,20 @@ exports.actualizarIndicio = async (req, res) => {
  * Llama al SP: sp_EliminarIndicio (13)
  */
 exports.eliminarIndicio = async (req, res) => {
-    const id_expediente = req.params.id; 
     const id_indicio = req.params.idIndicio;
+    const id_usuario_accion = req.user.id;
     
     try {
         const params = [
             { name: 'id_indicio', type: sql.Int, value: id_indicio },
-            { name: 'id_expediente', type: sql.Int, value: id_expediente }
+            { name: 'id_usuario_accion', type: sql.Int, value: id_usuario_accion }
         ];
 
-        // El SP (13) sp_EliminarIndicio valida el estado.
+        // El SP (13) sp_EliminarIndicio valida el estado y registra en bitácora.
         await executeStoredProcedure('sp_EliminarIndicio', params);
         
         res.status(200).json({
-            message: `Indicio ${id_indicio} eliminado exitosamente. (Acción registrada en la Bitácora).`,
+            message: `Indicio ${id_indicio} eliminado exitosamente. (Acción registrada en la Bitácora).`
         });
 
     } catch (error) {
@@ -292,16 +294,15 @@ exports.eliminarIndicio = async (req, res) => {
  */
 exports.listarExpedientes = async (req, res) => {
     // Filtros opcionales desde los query parameters
-    const { id_estado, id_fiscalia, fecha_inicio, fecha_fin, codigo } = req.query;
+    const { id_estado, fecha_inicio, fecha_fin, codigo_expediente } = req.query;
 
     try {
         const params = [
-            { name: 'id_estado', type: sql.Int, value: id_estado || null },
-            { name: 'id_fiscalia', type: sql.Int, value: id_fiscalia || null },
+            { name: 'id_estado', type: sql.Int, value: id_estado ? parseInt(id_estado) : null },
             // Las fechas se esperan en formato ISO (YYYY-MM-DD)
-            { name: 'fecha_inicio', type: sql.Date, value: fecha_inicio || null },
-            { name: 'fecha_fin', type: sql.Date, value: fecha_fin || null },
-            { name: 'codigo_expediente', type: sql.VarChar(50), value: codigo || null }
+            { name: 'fecha_inicio', type: sql.DateTime, value: fecha_inicio || null },
+            { name: 'fecha_fin', type: sql.DateTime, value: fecha_fin || null },
+            { name: 'codigo_expediente', type: sql.VarChar(50), value: codigo_expediente || null }
         ];
 
         // El SP (10) sp_ListarExpedientes usa la vista vw_ReporteExpedientes.

@@ -1,16 +1,18 @@
 {
   "name": "api_dicri",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "API RESTful para la Dirección de Investigación Criminalística del Ministerio Público, Guatemala",
+  "main": "server.js",
   "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/natalycux/API_DICRI.git"
   },
-  "keywords": [],
+  "keywords": ["api", "dicri", "expedientes", "indicios", "sql-server"],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
