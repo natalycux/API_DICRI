@@ -12,7 +12,13 @@
     "type": "git",
     "url": "git+https://github.com/natalycux/API_DICRI.git"
   },
-  "keywords": ["api", "dicri", "expedientes", "indicios", "sql-server"],
+  "keywords": [
+    "api",
+    "dicri",
+    "expedientes",
+    "indicios",
+    "sql-server"
+  ],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
@@ -22,6 +28,7 @@
   "homepage": "https://github.com/natalycux/API_DICRI#readme",
   "dependencies": {
     "bcryptjs": "^3.0.3",
+    "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
