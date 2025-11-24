@@ -141,4 +141,40 @@ router.put('/:id', userController.updateUser);
  */
 router.patch('/:id/estado', userController.toggleUserStatus);
 
+/**
+ * @swagger
+ * /users/{id}/toggle-estado:
+ *   put:
+ *     summary: Hace toggle automático del estado del usuario (activo ↔ inactivo)
+ *     tags: [Usuarios]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID del usuario
+ *     responses:
+ *       200:
+ *         description: Estado del usuario cambiado automáticamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 id_usuario:
+ *                   type: integer
+ *                 nuevoEstado:
+ *                   type: integer
+ *       404:
+ *         description: Usuario no encontrado
+ *       403:
+ *         description: Acceso denegado
+ */
+router.put('/:id/toggle-estado', userController.autoToggleUserStatus);
+
 module.exports = router;
